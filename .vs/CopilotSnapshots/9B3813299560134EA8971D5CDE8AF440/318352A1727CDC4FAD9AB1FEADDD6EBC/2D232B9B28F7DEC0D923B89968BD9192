@@ -1,0 +1,18 @@
+﻿{
+  "[gherkin]": {
+    "editor.defaultFormatter": "alexkrechik.cucumberautocomplete"
+  },
+  "cucumberautocomplete.steps": [
+    "src/steps/**/*.ts"
+  ],
+  "cucumberautocomplete.strictGherkinCompletion": false,
+  "cucumberautocomplete.skipDocStringsFormat": false,
+  "editor.quickSuggestions": {
+    "comments": false,
+    "strings": true,
+    "other": true
+  },
+  "files.associations": {
+    "*.feature": "gherkin"
+  }
+}

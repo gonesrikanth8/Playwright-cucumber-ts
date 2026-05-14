@@ -1,0 +1,41 @@
+{
+  "name": "playwright-typescript-cucumber",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright end-to-end tests with TypeScript and Cucumber",
+  "scripts": {
+    "clean": "rimraf reports playwright-report test-results dist screenshots videos traces",
+    "test": "cucumber-js",
+    "test:headed": "cross-env HEADED=true cucumber-js",
+    "test:parallel": "cross-env CUCUMBER_WORKERS=4 cucumber-js",
+    "test:parallel:headed": "cross-env HEADED=true CUCUMBER_WORKERS=4 cucumber-js",
+    "test:tags": "cross-env CUCUMBER_TAGS=\"@smoke\" cucumber-js",
+    "test:tags:headed": "cross-env HEADED=true CUCUMBER_TAGS=\"@smoke\" cucumber-js",
+    "test:tags:parallel": "cross-env CUCUMBER_TAGS=\"@smoke\" CUCUMBER_WORKERS=4 cucumber-js",
+    "test:tags:parallel:headed": "cross-env HEADED=true CUCUMBER_TAGS=\"@smoke\" CUCUMBER_WORKERS=4 cucumber-js",
+    "test:playwright": "playwright test",
+    "test:playwright:headed": "playwright test --headed",
+    "report:playwright": "playwright show-report",
+    "postinstall": "playwright install chromium",
+    "build": "tsc --noEmit",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^12.8.3",
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^22.19.19",
+    "cross-env": "^7.0.3",
+    "playwright": "^1.59.1",
+    "rimraf": "^6.1.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

@@ -1,0 +1,344 @@
+﻿# Variable Values Reference Card
+
+## Quick Copy-Paste Commands
+
+### HEADED Mode - Browser Visibility
+```bash
+# Show browser (headed)
+npm run test:headed
+HEADED=true npm test
+
+# Hide browser (headless - default)
+npm test
+HEADED=false npm test
+```
+
+**Values:** `true` | `false`
+
+---
+
+### CUCUMBER_TAGS - Filter by Tags
+```bash
+# Single tag
+CUCUMBER_TAGS="@smoke" npm test
+CUCUMBER_TAGS="@regression" npm test
+CUCUMBER_TAGS="@critical" npm test
+
+# Multiple tags (AND)
+CUCUMBER_TAGS="@smoke and @critical" npm test
+CUCUMBER_TAGS="@regression and @nonparallel" npm test
+
+# Multiple tags (OR)
+CUCUMBER_TAGS="@smoke or @regression" npm test
+
+# Exclude tags
+CUCUMBER_TAGS="not @wip" npm test
+CUCUMBER_TAGS="not @skip" npm test
+
+# Complex expressions
+CUCUMBER_TAGS="@smoke and not @wip" npm test
+CUCUMBER_TAGS="(@smoke or @regression) and not @wip" npm test
+CUCUMBER_TAGS="@critical and (@api or @ui)" npm test
+```
+
+**Values:** Any tag expression like:
+- `@tag`
+- `@tag1 and @tag2`
+- `@tag1 or @tag2`
+- `not @tag`
+- Complex combinations
+
+---
+
+### CUCUMBER_WORKERS - Parallel Execution
+```bash
+# Serial execution (one test at a time)
+npm test
+CUCUMBER_WORKERS=0 npm test
+
+# 2 parallel workers
+CUCUMBER_WORKERS=2 npm test
+
+# 4 parallel workers (recommended default)
+npm run test:parallel
+CUCUMBER_WORKERS=4 npm test
+
+# 8 parallel workers (high-end systems)
+CUCUMBER_WORKERS=8 npm test
+```
+
+**Values:** 
+- `0` - Serial (sequential)
+- `1` - Single worker
+- `2` - 2 parallel
+- `4` - 4 parallel (recommended)
+- `8` - 8 parallel (requires strong system)
+
+---
+
+## Combination Reference
+
+### All Combinations with Values
+
+```bash
+# Format: HEADED | TAGS | WORKERS
+# ================================
+
+# Headless, All tests, Serial
+npm test
+HEADED=false CUCUMBER_TAGS="" CUCUMBER_WORKERS=0 npm test
+
+# Headed, All tests, Serial
+npm run test:headed
+HEADED=true CUCUMBER_TAGS="" CUCUMBER_WORKERS=0 npm test
+
+# Headless, @smoke, Serial
+npm run test:tags
+HEADED=false CUCUMBER_TAGS="@smoke" CUCUMBER_WORKERS=0 npm test
+
+# Headed, @smoke, Serial
+npm run test:tags:headed
+HEADED=true CUCUMBER_TAGS="@smoke" CUCUMBER_WORKERS=0 npm test
+
+# Headless, All tests, 4 workers
+npm run test:parallel
+HEADED=false CUCUMBER_TAGS="" CUCUMBER_WORKERS=4 npm test
+
+# Headed, All tests, 4 workers
+npm run test:parallel:headed
+HEADED=true CUCUMBER_TAGS="" CUCUMBER_WORKERS=4 npm test
+
+# Headless, @smoke, 4 workers
+npm run test:tags:parallel
+HEADED=false CUCUMBER_TAGS="@smoke" CUCUMBER_WORKERS=4 npm test
+
+# Headed, @smoke, 4 workers
+npm run test:tags:parallel:headed
+HEADED=true CUCUMBER_TAGS="@smoke" CUCUMBER_WORKERS=4 npm test
+```
+
+---
+
+## Custom Combinations
+
+### I want to... → Use this command
+
+**Run with visible browser for debugging**
+```bash
+npm run test:headed
+# or
+HEADED=true npm test
+```
+
+**Run @critical tests only**
+```bash
+CUCUMBER_TAGS="@critical" npm test
+```
+
+**Run tests faster (parallel)**
+```bash
+npm run test:parallel
+# or
+CUCUMBER_WORKERS=4 npm test
+```
+
+**Run @regression tests with visible browser**
+```bash
+HEADED=true CUCUMBER_TAGS="@regression" npm test
+```
+
+**Run parallel tests with visible browser**
+```bash
+npm run test:parallel:headed
+# or
+HEADED=true CUCUMBER_WORKERS=4 npm test
+```
+
+**Run @smoke tests, parallel, headless**
+```bash
+CUCUMBER_TAGS="@smoke" CUCUMBER_WORKERS=4 npm test
+```
+
+**Run everything except @wip tests**
+```bash
+CUCUMBER_TAGS="not @wip" npm test
+```
+
+**Run @smoke AND @critical tests in parallel, headed**
+```bash
+HEADED=true CUCUMBER_TAGS="@smoke and @critical" CUCUMBER_WORKERS=4 npm test
+```
+
+**Run with minimal workers (safe)**
+```bash
+CUCUMBER_WORKERS=2 npm test
+```
+
+---
+
+## Variable Value Ranges
+
+### HEADED
+| Value | Result |
+|-------|--------|
+| `true` | Browser window opens |
+| `false` | Headless/hidden browser |
+| (not set) | `false` (headless) |
+
+### CUCUMBER_TAGS
+| Value | Example | Result |
+|-------|---------|--------|
+| (empty) | `CUCUMBER_TAGS=""` | All scenarios |
+| `@tag` | `CUCUMBER_TAGS="@smoke"` | Only @smoke |
+| `@tag1 and @tag2` | `CUCUMBER_TAGS="@smoke and @critical"` | Both tags |
+| `@tag1 or @tag2` | `CUCUMBER_TAGS="@smoke or @regression"` | Either tag |
+| `not @tag` | `CUCUMBER_TAGS="not @wip"` | Exclude tag |
+
+### CUCUMBER_WORKERS
+| Value | Workers | Result |
+|-------|---------|--------|
+| `0` | None | Serial execution |
+| `1` | 1 | Single worker (quasi-serial) |
+| `2` | 2 | 2 scenarios at once |
+| `4` | 4 | 4 scenarios at once (default) |
+| `8` | 8 | 8 scenarios at once |
+
+---
+
+## Environment Variable Syntax
+
+### Windows PowerShell
+```powershell
+$env:HEADED='true'
+$env:CUCUMBER_TAGS='@smoke'
+$env:CUCUMBER_WORKERS='4'
+npm test
+```
+
+### Windows Command Prompt (cmd)
+```cmd
+set HEADED=true
+set CUCUMBER_TAGS=@smoke
+set CUCUMBER_WORKERS=4
+npm test
+```
+
+### Mac/Linux Bash
+```bash
+export HEADED=true
+export CUCUMBER_TAGS=@smoke
+export CUCUMBER_WORKERS=4
+npm test
+```
+
+### In npm scripts (package.json)
+```json
+{
+  "scripts": {
+    "test": "cross-env HEADED=false CUCUMBER_WORKERS=0 cucumber-js",
+    "test:custom": "cross-env HEADED=true CUCUMBER_TAGS=\"@smoke\" CUCUMBER_WORKERS=4 cucumber-js"
+  }
+}
+```
+
+---
+
+## Tag Expression Cheat Sheet
+
+```bash
+# Basic
+@smoke                          # Single tag
+@smoke @critical                # Multiple tags in file (space-separated)
+
+# Logical operators
+@smoke and @critical            # Both tags required
+@smoke or @regression           # Either tag works
+not @wip                        # Without tag
+
+# Complex expressions
+(@smoke or @regression)         # Grouped OR
+@smoke and not @wip             # AND with NOT
+(@smoke and @critical) or @fast # Multiple groups
+
+# Real examples
+@smoke and @critical            # Critical smoke tests
+@regression and not @wip        # Regression tests, exclude WIP
+@ui or @api                     # UI tests OR API tests
+not @skip                       # Everything except skip
+@performance and not @manual    # Performance, exclude manual
+```
+
+---
+
+## Copy-Paste Templates
+
+### Template 1: Change Everything
+```bash
+HEADED=true CUCUMBER_TAGS="@smoke" CUCUMBER_WORKERS=4 npm test
+```
+Replace: `true` → `false/true`, `@smoke` → your tag, `4` → worker count
+
+### Template 2: Headed + Tags
+```bash
+HEADED=true CUCUMBER_TAGS="@smoke" npm test
+```
+
+### Template 3: Tags + Workers
+```bash
+CUCUMBER_TAGS="@smoke" CUCUMBER_WORKERS=4 npm test
+```
+
+### Template 4: Headed + Workers
+```bash
+HEADED=true CUCUMBER_WORKERS=4 npm test
+```
+
+### Template 5: Everything
+```bash
+HEADED=true CUCUMBER_TAGS="@smoke and not @wip" CUCUMBER_WORKERS=4 npm test
+```
+
+---
+
+## Values Summary Table
+
+| Variable | Default | Valid Values | Example |
+|----------|---------|--------------|---------|
+| `HEADED` | `false` | `true`, `false` | `HEADED=true` |
+| `CUCUMBER_TAGS` | `` (all) | Any tag expression | `CUCUMBER_TAGS="@smoke"` |
+| `CUCUMBER_WORKERS` | `0` | `0-8` (adjust for system) | `CUCUMBER_WORKERS=4` |
+| `CUCUMBER_PARALLEL` | Uses WORKERS | `true`, `false` | `CUCUMBER_PARALLEL=true` |
+| `TRACE` | Not set | `all` or any value | `TRACE=all` |
+
+---
+
+## Performance Comparison
+
+```
+HEADED=false CUCUMBER_WORKERS=0  → 30s (slowest)
+HEADED=true  CUCUMBER_WORKERS=0  → 35-40s
+HEADED=false CUCUMBER_WORKERS=4  → 8-10s (fastest) ⚡
+HEADED=true  CUCUMBER_WORKERS=4  → 15-20s
+```
+
+---
+
+## One-Liner Examples
+
+```bash
+# Fastest
+npm run test:parallel
+
+# Debug single test
+npm run test:headed
+
+# Run specific suite
+CUCUMBER_TAGS="@critical" npm test
+
+# Complex: fast, specific, visible
+HEADED=true CUCUMBER_TAGS="@smoke and not @wip" CUCUMBER_WORKERS=4 npm test
+```
+
+---
+
+**Remember:** All 8 pre-configured scripts are in `package.json`!

@@ -1,0 +1,242 @@
+﻿# Quick Start Guide - Running Tests with Variables
+
+## Most Common Use Cases
+
+### 1. **Run All Tests (Headless, Serial)**
+```bash
+npm test
+```
+
+### 2. **Run Tests in Headed Mode (See Browser)**
+```bash
+npm run test:headed
+```
+Or manually:
+```bash
+cross-env HEADED=true npm test
+```
+
+### 3. **Run Tests in Parallel (4 Workers)**
+```bash
+npm run test:parallel
+```
+Or manually:
+```bash
+cross-env CUCUMBER_WORKERS=4 npm test
+```
+
+### 4. **Run Tests in Headed Mode + Parallel**
+```bash
+npm run test:parallel:headed
+```
+Or manually:
+```bash
+cross-env HEADED=true CUCUMBER_WORKERS=4 npm test
+```
+
+---
+
+## Running Tests with Specific Tags
+
+First, add tags to your feature files:
+
+```gherkin
+@smoke @critical
+Scenario: Example test
+  Given some step
+```
+
+### 5. **Run Only @smoke Tests**
+```bash
+cross-env CUCUMBER_TAGS="@smoke" npm test
+```
+
+### 6. **Run @smoke Tests in Headed Mode**
+```bash
+cross-env HEADED=true CUCUMBER_TAGS="@smoke" npm test
+```
+
+### 7. **Run @smoke Tests in Parallel (4 Workers)**
+```bash
+cross-env CUCUMBER_TAGS="@smoke" CUCUMBER_WORKERS=4 npm test
+```
+
+### 8. **Run @smoke Tests - Headed + Parallel**
+```bash
+npm run test:tags:parallel:headed
+```
+Or manually:
+```bash
+cross-env HEADED=true CUCUMBER_TAGS="@smoke" CUCUMBER_WORKERS=4 npm test
+```
+
+---
+
+## Tag Expression Examples
+
+```bash
+# Single tag
+cross-env CUCUMBER_TAGS="@smoke" npm test
+
+# Multiple tags (AND)
+cross-env CUCUMBER_TAGS="@smoke and @critical" npm test
+
+# Multiple tags (OR)
+cross-env CUCUMBER_TAGS="@smoke or @regression" npm test
+
+# Exclude tag
+cross-env CUCUMBER_TAGS="not @wip" npm test
+
+# Complex expression
+cross-env CUCUMBER_TAGS="(@smoke or @regression) and not @wip" npm test
+
+# Case sensitive - exact match required
+cross-env CUCUMBER_TAGS="@PERF-299" npm test
+```
+
+---
+
+## Parallel Execution Options
+
+```bash
+# Serial (one scenario at a time) - DEFAULT
+npm test
+cross-env CUCUMBER_WORKERS=0 npm test
+
+# 2 parallel workers
+cross-env CUCUMBER_WORKERS=2 npm test
+
+# 4 parallel workers (recommended for most systems)
+cross-env CUCUMBER_WORKERS=4 npm test
+
+# 8 parallel workers (use if system has high resources)
+cross-env CUCUMBER_WORKERS=8 npm test
+```
+
+---
+
+## Advanced Combinations
+
+### Run @smoke and @regression (excluding @wip) with 4 workers in headed mode
+```bash
+cross-env HEADED=true CUCUMBER_TAGS="(@smoke or @regression) and not @wip" CUCUMBER_WORKERS=4 npm test
+```
+
+### Run all tests except @wip, collect traces for all scenarios, 2 workers
+```bash
+cross-env CUCUMBER_TAGS="not @wip" CUCUMBER_WORKERS=2 TRACE=all npm test
+```
+
+### Run @performance tests in headed mode with full tracing
+```bash
+cross-env HEADED=true CUCUMBER_TAGS="@performance" TRACE=all npm test
+```
+
+---
+
+## Understanding Output
+
+When you run tests, you'll see:
+
+```
+......FA.
+
+Failures:
+
+1) Scenario: Example # features/login.feature:4
+   √ Given step 1          # Passed
+   × And step 2            # Failed
+   √ Then step 3           # Passed
+
+2 scenarios (1 failed, 1 passed)
+5 steps (1 failed, 2 skipped, 3 passed)
+```
+
+- **✓** = Passed step
+- **×** = Failed step
+- **-** = Skipped step (due to previous failure)
+
+---
+
+## Pre-configured npm Scripts in package.json
+
+```json
+{
+  "scripts": {
+    "test": "cucumber-js",
+    "test:headed": "cross-env HEADED=true cucumber-js",
+    "test:parallel": "cross-env CUCUMBER_WORKERS=4 cucumber-js",
+    "test:parallel:headed": "cross-env HEADED=true CUCUMBER_WORKERS=4 cucumber-js",
+    "test:tags": "cross-env CUCUMBER_TAGS=\"@smoke\" cucumber-js",
+    "test:tags:headed": "cross-env HEADED=true CUCUMBER_TAGS=\"@smoke\" cucumber-js",
+    "test:tags:parallel": "cross-env CUCUMBER_TAGS=\"@smoke\" CUCUMBER_WORKERS=4 cucumber-js",
+    "test:tags:parallel:headed": "cross-env HEADED=true CUCUMBER_TAGS=\"@smoke\" CUCUMBER_WORKERS=4 cucumber-js"
+  }
+}
+```
+
+---
+
+## Real-World Examples
+
+### Example 1: CI/CD Pipeline - Run all tests in parallel, headless
+```bash
+cross-env CUCUMBER_WORKERS=4 npm test
+```
+
+### Example 2: Local Development - Run @smoke tests in headed mode for debugging
+```bash
+npm run test:tags:headed
+# Or with custom tag:
+cross-env HEADED=true CUCUMBER_TAGS="@debug" npm test
+```
+
+### Example 3: Run regression suite excluding work-in-progress
+```bash
+cross-env CUCUMBER_TAGS="@regression and not @wip" CUCUMBER_WORKERS=4 npm test
+```
+
+### Example 4: Run critical tests with full logging/tracing
+```bash
+cross-env CUCUMBER_TAGS="@critical" TRACE=all HEADED=true npm test
+```
+
+---
+
+## Environment Variable Reference
+
+| Variable | Values | Default | Purpose |
+|----------|--------|---------|---------|
+| `HEADED` | `true` / `false` | `false` | Show/hide browser window |
+| `CUCUMBER_TAGS` | Tag expression | Empty | Filter scenarios by tags |
+| `CUCUMBER_WORKERS` | `0` or number | `0` | Parallel worker count (0=serial) |
+| `TRACE` | `all` or any | Not set | Collect traces for all scenarios |
+
+---
+
+## Troubleshooting
+
+### Q: Why aren't my tags working?
+A: Make sure tags in feature files start with `@`:
+```gherkin
+@smoke  ✓ Correct
+smoke   ✗ Wrong - missing @
+```
+
+### Q: How do I know if parallel execution is working?
+A: Check the output - you'll see multiple scenarios running simultaneously.
+
+### Q: Can I run 0 workers?
+A: Yes, `CUCUMBER_WORKERS=0` or omitting it runs tests serially (one at a time).
+
+### Q: What if my system is slow?
+A: Reduce workers: `cross-env CUCUMBER_WORKERS=2 npm test` instead of 4.
+
+---
+
+## Next Steps
+
+1. **Add tags to your feature files** - See ENVIRONMENT_VARIABLES.md for examples
+2. **Customize npm scripts** - Edit package.json scripts section
+3. **Create CI/CD integration** - Use these commands in your pipeline
+4. **Monitor performance** - Compare serial vs parallel execution times

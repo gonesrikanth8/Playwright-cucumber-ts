@@ -1,0 +1,287 @@
+﻿# Environment Variables Configuration Guide
+
+This guide explains how to configure Cucumber tests using environment variables for headed mode, tags, and parallel execution.
+
+---
+
+## Environment Variables
+
+### 1. **HEADED** - Run tests in headed/headless mode
+- **Type:** `boolean` (true/false)
+- **Default:** `false` (headless mode)
+- **Description:** When set to `true`, runs Playwright in headed mode (browser window visible)
+
+**Examples:**
+```bash
+# Headless mode (default)
+npm test
+
+# Headed mode (browser window visible)
+cross-env HEADED=true npm test
+```
+
+---
+
+### 2. **CUCUMBER_TAGS** - Filter tests by tags
+- **Type:** `string` (tag expression)
+- **Default:** Empty string (runs all scenarios)
+- **Description:** Cucumber tag expression to filter which scenarios to run
+
+**Tag Expression Syntax:**
+- `@smoke` - Run scenarios with @smoke tag
+- `@regression` - Run scenarios with @regression tag
+- `@smoke and @critical` - Run scenarios with BOTH tags
+- `@smoke or @regression` - Run scenarios with EITHER tag
+- `not @wip` - Run scenarios WITHOUT @wip tag
+- `@smoke and not @wip` - Complex expressions
+
+**Examples:**
+```bash
+# Run only @smoke tests
+cross-env CUCUMBER_TAGS="@smoke" npm test
+
+# Run @smoke and @critical tests
+cross-env CUCUMBER_TAGS="@smoke and @critical" npm test
+
+# Run all tests except @wip
+cross-env CUCUMBER_TAGS="not @wip" npm test
+
+# Run @smoke but not @wip
+cross-env CUCUMBER_TAGS="@smoke and not @wip" npm test
+```
+
+---
+
+### 3. **CUCUMBER_WORKERS** - Parallel execution workers
+- **Type:** `number` (0 = serial, >0 = number of parallel workers)
+- **Default:** `0` (serial/sequential execution)
+- **Description:** Number of parallel workers to run tests concurrently
+
+**Examples:**
+```bash
+# Serial execution (one scenario at a time)
+npm test
+# or
+cross-env CUCUMBER_WORKERS=0 npm test
+
+# 2 parallel workers
+cross-env CUCUMBER_WORKERS=2 npm test
+
+# 4 parallel workers
+cross-env CUCUMBER_WORKERS=4 npm test
+```
+
+---
+
+### 4. **CUCUMBER_PARALLEL** - Enable/disable parallel execution
+- **Type:** `boolean` (true/false/yes/no/on/off)
+- **Default:** Uses `CUCUMBER_WORKERS` value
+- **Description:** Gate for parallel execution when `CUCUMBER_WORKERS` is set
+
+**Examples:**
+```bash
+# Force serial even with CUCUMBER_WORKERS set
+cross-env CUCUMBER_PARALLEL=false CUCUMBER_WORKERS=4 npm test
+
+# Enable parallel with CUCUMBER_WORKERS
+cross-env CUCUMBER_PARALLEL=true CUCUMBER_WORKERS=4 npm test
+```
+
+---
+
+### 5. **TRACE** - Trace collection strategy
+- **Type:** `string` ('all' or any value)
+- **Default:** Traces only on failures
+- **Description:** When set to 'all', collects traces for all scenarios (not just failures)
+
+**Examples:**
+```bash
+# Collect traces for all scenarios
+cross-env TRACE=all npm test
+
+# Default - traces only on failures
+npm test
+```
+
+---
+
+## Pre-configured npm Scripts
+
+Quick commands for common scenarios:
+
+```bash
+# Basic test runs
+npm test                              # Run all tests in headless mode (serial)
+npm run test:headed                   # Run all tests in headed mode
+
+# Parallel execution
+npm run test:parallel                 # 4 workers, headless mode
+npm run test:parallel:headed          # 4 workers, headed mode
+
+# Tag-based execution
+npm run test:tags                     # Run @smoke tests (modify script for different tags)
+npm run test:tags:headed              # @smoke tests in headed mode
+npm run test:tags:parallel            # @smoke tests in parallel (4 workers)
+npm run test:tags:parallel:headed     # @smoke tests in parallel, headed mode
+```
+
+---
+
+## Custom Command Examples
+
+### Example 1: Run @regression tests with 2 workers in headed mode
+```bash
+cross-env HEADED=true CUCUMBER_TAGS="@regression" CUCUMBER_WORKERS=2 npm test
+```
+
+### Example 2: Run @smoke and @critical tests in series, headed mode
+```bash
+cross-env HEADED=true CUCUMBER_TAGS="@smoke and @critical" npm test
+```
+
+### Example 3: Run all tests except @wip with 4 workers, collect all traces
+```bash
+cross-env CUCUMBER_WORKERS=4 CUCUMBER_TAGS="not @wip" TRACE=all npm test
+```
+
+### Example 4: Run @performance tests in headed mode, capture all traces
+```bash
+cross-env HEADED=true CUCUMBER_TAGS="@performance" TRACE=all npm test
+```
+
+---
+
+## Combining Variables
+
+You can combine multiple variables in a single command:
+
+```bash
+cross-env VAR1=value1 VAR2=value2 VAR3=value3 npm test
+```
+
+**Template:**
+```bash
+cross-env HEADED=true|false CUCUMBER_TAGS="tag_expression" CUCUMBER_WORKERS=number CUCUMBER_PARALLEL=true|false TRACE=all npm test
+```
+
+---
+
+## On Windows Command Line (cmd.exe)
+
+If using `cross-env` doesn't work, use Windows-specific syntax:
+
+```cmd
+# Set variables first
+set HEADED=true
+set CUCUMBER_TAGS=@smoke
+set CUCUMBER_WORKERS=4
+
+# Then run test
+npm test
+```
+
+---
+
+## On Windows PowerShell
+
+```powershell
+$env:HEADED='true'
+$env:CUCUMBER_TAGS='@smoke'
+$env:CUCUMBER_WORKERS='4'
+
+npm test
+```
+
+---
+
+## CI/CD Pipeline Usage
+
+### Example: GitHub Actions
+```yaml
+- name: Run tests with tags and parallel
+  env:
+    HEADED: false
+    CUCUMBER_TAGS: '@smoke and not @wip'
+    CUCUMBER_WORKERS: 4
+    TRACE: all
+  run: npm test
+```
+
+### Example: GitLab CI
+```yaml
+test:
+  script:
+    - npm test
+  variables:
+    CUCUMBER_TAGS: "@smoke"
+    CUCUMBER_WORKERS: "2"
+```
+
+---
+
+## Feature File Example with Tags
+
+```gherkin
+Feature: User Login
+
+  @smoke @critical
+  Scenario: Valid user login
+    Given User navigate to Salesforce Application
+    And User Login as "Admin User"
+    Then User should see dashboard
+
+  @regression @wip
+  Scenario: Invalid password
+    Given User navigate to Salesforce Application
+    And User Login with invalid password
+    Then Error message should display
+
+  @performance
+  Scenario: Login performance test
+    Given User navigate to Salesforce Application
+    And measure login time
+    Then login should complete within 5 seconds
+```
+
+**Run commands:**
+```bash
+# Only @smoke and @critical
+cross-env CUCUMBER_TAGS="@smoke and @critical" npm test
+
+# All except @wip (excludes "Invalid password" and any @wip scenarios)
+cross-env CUCUMBER_TAGS="not @wip" npm test
+
+# Only @performance tests with 4 workers
+cross-env CUCUMBER_TAGS="@performance" CUCUMBER_WORKERS=4 npm test
+```
+
+---
+
+## Troubleshooting
+
+### Issue: Variables not working on Windows
+**Solution:** Use `cross-env` package (already installed) or native Windows commands
+
+### Issue: Tags not filtering correctly
+**Solution:** 
+- Ensure tags start with `@` symbol
+- Check feature file for correct tag placement
+- Use quotes around complex expressions: `"@tag1 and @tag2"`
+
+### Issue: Parallel execution seems slow
+**Solution:**
+- Reduce `CUCUMBER_WORKERS` if system is overloaded
+- Check system resources (CPU, RAM)
+- Use `TRACE=all` might slow down execution
+
+---
+
+## Summary
+
+| Variable | Purpose | Example |
+|----------|---------|---------|
+| `HEADED` | Browser visibility | `true` / `false` |
+| `CUCUMBER_TAGS` | Filter scenarios | `@smoke` / `@regression and not @wip` |
+| `CUCUMBER_WORKERS` | Parallel workers | `0` (serial), `2`, `4`, `8` |
+| `CUCUMBER_PARALLEL` | Enable/disable parallel | `true` / `false` |
+| `TRACE` | Trace collection | `all` (all scenarios) or default (failures only) |

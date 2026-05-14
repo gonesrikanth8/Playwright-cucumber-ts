@@ -1,0 +1,49 @@
+/**
+ * CI/CD (e.g. Bamboo): inject env vars on the job - no code changes per pipeline.
+ * * CUCUMBER_TAGS      Tag expression, e.g. @smoke or "@smoke and not @wip"
+ * CUCUMBER_WORKERS   Parallel worker count (0 = serial). Example: 4
+ * CUCUMBER_PARALLEL  When set: true/1/yes or false/0/no - gates parallel even if WORKERS is set
+ * * If CUCUMBER_PARALLEL is unset, behavior matches before: only CUCUMBER_WORKERS controls parallel.
+ * * Bamboo: map plan/inject variables to these names (Environment variables task / inline script).
+ */
+
+/** @returns {number} */
+function parallelWorkerCount() {
+  const raw = process.env.CUCUMBER_WORKERS;
+  const n =
+    raw === undefined || raw === '' ? 0 : parseInt(String(raw), 10);
+  const workers = Number.isFinite(n) && n >= 0 ? n : 0;
+
+  const flag = process.env.CUCUMBER_PARALLEL;
+  if (flag === undefined) {
+    return workers;
+  }
+  if (['false', '0', 'no', 'off'].includes(String(flag).toLowerCase())) {
+    return 0;
+  }
+  if (['true', '1', 'yes', 'on'].includes(String(flag).toLowerCase())) {
+    return workers > 0 ? workers : 0;
+  }
+  return workers;
+}
+
+function tagsFromEnv() {
+  return process.env.CUCUMBER_TAGS ?? '';
+}
+
+module.exports = {
+  default: {
+    formatOptions: { snippetInterface: 'async-await' },
+    requireModule: ['ts-node/register'],
+    require: ['src/support/**/*.ts', 'src/steps/**/*.ts'],
+    paths: ['features/**/*.feature'],
+    publishQuiet: true,
+    tags: tagsFromEnv(),
+    parallel: parallelWorkerCount(),
+    format: [
+      'progress',
+      'html:reports/cucumber/cucumber-report.html',
+      'json:reports/cucumber/cucumber-report.json',
+    ],
+  },
+};

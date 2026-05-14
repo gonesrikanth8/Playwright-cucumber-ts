@@ -1,0 +1,363 @@
+﻿# 🎨 Visual Quick Reference - Environment Variables
+
+## Command Decision Tree
+
+```
+┌─ START: What do you want to do?
+│
+├─ "I want to SEE the browser"
+│  └─→ npm run test:headed
+│
+├─ "I want tests to run FAST"
+│  └─→ npm run test:parallel
+│
+├─ "I want to run @smoke tests only"
+│  ├─→ npm run test:tags (basic)
+│  ├─→ CUCUMBER_TAGS="@critical" npm test (custom)
+│  └─→ CUCUMBER_TAGS="@smoke and @critical" npm test (complex)
+│
+├─ "I want MAXIMUM speed (CI/CD)"
+│  └─→ npm run test:parallel
+│
+├─ "I want to DEBUG an issue"
+│  ├─→ npm run test:headed (see browser)
+│  ├─→ HEADED=true CUCUMBER_TAGS="@specific" npm test (debug specific)
+│  └─→ HEADED=true CUCUMBER_WORKERS=0 npm test (debug step by step)
+│
+└─ "I want ALL options combined"
+   └─→ HEADED=true CUCUMBER_TAGS="@tag" CUCUMBER_WORKERS=4 npm test
+```
+
+---
+
+## Variable Quick Reference
+
+### HEADED Variable
+```
+┌──────────────────────────────────────────┐
+│ HEADED - Browser Visibility Control     │
+├──────────────────────────────────────────┤
+│ Value   │ Mode      │ Speed  │ Use Case │
+├─────────┼───────────┼────────┼──────────┤
+│ true    │ 👁️ Headed  │ Slow   │ Debug    │
+│ false   │ 🚫 Headless│ Fast   │ Automate │
+│ (unset) │ 🚫 Headless│ Fast   │ Default  │
+└──────────────────────────────────────────┘
+
+Commands:
+  npm run test:headed        ← true
+  npm test                   ← false (default)
+```
+
+### CUCUMBER_TAGS Variable
+```
+┌─────────────────────────────────────────────────────┐
+│ CUCUMBER_TAGS - Filter Tests by Tags              │
+├─────────────────────────────────────────────────────┤
+│ Expression          │ Meaning                      │
+├─────────────────────┼──────────────────────────────┤
+│ @smoke              │ Only @smoke tests            │
+│ @smoke and @critical│ Both @smoke AND @critical    │
+│ @smoke or @regression│ @smoke OR @regression tests │
+│ not @wip            │ All EXCEPT @wip tests        │
+│ Complex expressions │ (@tag1 or @tag2) and...    │
+└─────────────────────────────────────────────────────┘
+
+Commands:
+  npm run test:tags                              ← @smoke
+  CUCUMBER_TAGS="@critical" npm test             ← custom
+  CUCUMBER_TAGS="@smoke and @critical" npm test  ← complex
+```
+
+### CUCUMBER_WORKERS Variable
+```
+┌──────────────────────────────────────────────────────┐
+│ CUCUMBER_WORKERS - Parallel Execution              │
+├──────────────────────────────────────────────────────┤
+│ Value │ Mode    │ Speed    │ Best System    │ Use   │
+├───────┼─────────┼──────────┼────────────────┼───────┤
+│ 0     │ Serial  │ 1x ⚠️    │ Any            │ Debug │
+│ 2     │ Parallel│ 2x 🔆    │ 2+ CPU cores   │ Safe  │
+│ 4     │ Parallel│ 3-4x ⚡  │ 4+ CPU cores   │ Good  │
+│ 8     │ Parallel│ 4x 🚀    │ 8+ CPU cores   │ Fast  │
+└──────────────────────────────────────────────────────┘
+
+Commands:
+  npm test                                    ← 0 (serial)
+  npm run test:parallel                       ← 4 workers
+  CUCUMBER_WORKERS=2 npm test                 ← 2 workers
+  CUCUMBER_WORKERS=8 npm test                 ← 8 workers
+```
+
+---
+
+## npm Scripts Reference
+
+```
+┌────────────────────────────────────────────────────────┐
+│ 8 Pre-Built npm Scripts (All in package.json)         │
+├────────────────────────────────────────────────────────┤
+│ Script                    │ Headed │ Tag  │ Workers   │
+├───────────────────────────┼────────┼──────┼───────────┤
+│ npm test                  │ No ❌   │ None │ 0 (serial)│
+│ npm run test:headed       │ Yes ✅  │ None │ 0 (serial)│
+│ npm run test:parallel     │ No ❌   │ None │ 4 parallel│
+│ npm run test:parallel:h.. │ Yes ✅  │ None │ 4 parallel│
+│ npm run test:tags         │ No ❌   │@smoke│ 0 (serial)│
+│ npm run test:tags:headed  │ Yes ✅  │@smoke│ 0 (serial)│
+│ npm run test:tags:parallel│ No ❌   │@smoke│ 4 parallel│
+│ npm run test:tags:parallel│ Yes ✅  │@smoke│ 4 parallel│
+│         :headed           │        │      │           │
+└────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Performance Comparison
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ Speed Comparison (9 scenarios)                         │
+├─────────────────────────────────────────────────────────┤
+│ Configuration              │ Time  │ Speed  │ Best For  │
+├────────────────────────────┼───────┼────────┼───────────┤
+│ Headless + Serial (0 work.)│ 30s   │ 1x ⚠️  │ Debugging │
+│ Headed + Serial            │ 35s   │ 1.2x   │ Debugging │
+│ Headless + 4 Workers       │ 8-10s │ 3-4x⚡ │ CI/CD     │
+│ Headed + 4 Workers         │ 15-20s│ 1.7x   │ Debug     │
+└─────────────────────────────────────────────────────────┘
+
+🏆 Winner: npm run test:parallel (Headless + 4 workers)
+```
+
+---
+
+## Tag Expression Examples
+
+```
+Single Tag:
+  @smoke
+
+Multiple (AND - both required):
+  @smoke and @critical
+  @regression and not @wip
+
+Multiple (OR - either works):
+  @smoke or @regression
+  @ui or @api
+
+Exclude:
+  not @wip
+  not @skip
+
+Complex:
+  (@smoke or @regression) and not @wip
+  @critical and (@api or @ui) and not @manual
+```
+
+---
+
+## Real-World Scenarios
+
+### Scenario 1: Local Development - Debugging
+```
+HEADED=true CUCUMBER_WORKERS=0
+Command: npm run test:headed
+Result: Browser visible, one test at a time (easiest to debug)
+```
+
+### Scenario 2: Local Development - Fast
+```
+HEADED=false CUCUMBER_WORKERS=4
+Command: npm run test:parallel
+Result: Browser hidden, 4 tests running (fast testing)
+```
+
+### Scenario 3: Specific Test Suite
+```
+HEADED=false CUCUMBER_TAGS="@critical" CUCUMBER_WORKERS=0
+Command: CUCUMBER_TAGS="@critical" npm test
+Result: Only @critical tests, one at a time
+```
+
+### Scenario 4: CI/CD Pipeline
+```
+HEADED=false CUCUMBER_WORKERS=4
+Command: npm run test:parallel
+Result: Fast, parallel, automated (best for pipelines)
+```
+
+### Scenario 5: Production Smoke Test
+```
+HEADED=false CUCUMBER_TAGS="@smoke and @critical" CUCUMBER_WORKERS=4
+Command: CUCUMBER_TAGS="@smoke and @critical" npm run test:parallel
+Result: Fast validation of critical smoke tests
+```
+
+---
+
+## Command Construction Guide
+
+```
+Template:
+  [HEADED=value] [CUCUMBER_TAGS="expression"] [CUCUMBER_WORKERS=number] npm test
+
+Examples:
+  npm test
+  ↓
+  HEADED=true npm test
+  ↓
+  CUCUMBER_TAGS="@smoke" npm test
+  ↓
+  CUCUMBER_WORKERS=4 npm test
+  ↓
+  HEADED=true CUCUMBER_TAGS="@smoke" npm test
+  ↓
+  HEADED=true CUCUMBER_TAGS="@smoke" CUCUMBER_WORKERS=4 npm test
+```
+
+---
+
+## Feature File Tags
+
+```gherkin
+┌─────────────────────────────────────────┐
+│ How to Add Tags to Feature Files       │
+├─────────────────────────────────────────┤
+
+@smoke @critical
+Scenario: Critical Smoke Test
+  Given User navigate to Salesforce Application
+  And User Login as "Admin"
+
+@regression @wip
+Scenario: Regression Test
+  Given User navigate to Salesforce Application
+  And perform some action
+
+@performance
+Scenario: Performance Test
+  Given User navigate to Salesforce Application
+  And measure performance metrics
+
+Then run:
+  CUCUMBER_TAGS="@smoke" npm test           ← Only @smoke
+  CUCUMBER_TAGS="@regression" npm test      ← Only @regression
+  CUCUMBER_TAGS="not @wip" npm test         ← Exclude @wip
+  CUCUMBER_TAGS="@smoke and @critical" npm test ← Both
+└─────────────────────────────────────────┘
+```
+
+---
+
+## Windows Command Examples
+
+### PowerShell
+```powershell
+# Single variable
+$env:HEADED='true'
+npm test
+
+# Multiple variables
+$env:HEADED='true'
+$env:CUCUMBER_TAGS='@smoke'
+$env:CUCUMBER_WORKERS='4'
+npm test
+```
+
+### Command Prompt
+```cmd
+# Single variable
+set HEADED=true
+npm test
+
+# Multiple variables
+set HEADED=true
+set CUCUMBER_TAGS=@smoke
+set CUCUMBER_WORKERS=4
+npm test
+```
+
+---
+
+## Flowchart: Which npm Script?
+
+```
+                    Start
+                      ↓
+            What's your goal?
+            ↙          ↓          ↘
+         Debug    Run All      Run Specific
+          (need   (any tests)  (particular tags)
+          to see            ↙        ↓        ↘
+         browser)      Headless    Headed    Custom
+            ↓             ↓           ↓         ↓
+      test:headed   test:parallel  test:   CUCUMBER_
+                                    parallel TAGS=
+                                    :headed   "@tag"
+                                             npm test
+```
+
+---
+
+## Quick Copy-Paste Commands
+
+```bash
+# Copy these directly into terminal
+
+# See browser
+npm run test:headed
+
+# Run fast (parallel)
+npm run test:parallel
+
+# Run @smoke tests
+npm run test:tags
+
+# Run @critical tests (custom tag)
+CUCUMBER_TAGS="@critical" npm test
+
+# Run 2 workers instead of 4
+CUCUMBER_WORKERS=2 npm test
+
+# Everything combined
+HEADED=true CUCUMBER_TAGS="@smoke" CUCUMBER_WORKERS=4 npm test
+
+# Complex tag expression
+CUCUMBER_TAGS="(@smoke or @regression) and not @wip" npm test
+```
+
+---
+
+## Status Indicators
+
+| Symbol | Meaning |
+|--------|---------|
+| ✅ | Implemented & Working |
+| ❌ | Not implemented |
+| ⚡ | Fast/Optimized |
+| ⚠️ | Slow/Use with caution |
+| 🔆 | Moderate |
+| 🚀 | Very fast |
+
+---
+
+## Documentation Quick Links
+
+| Document | Read If... |
+|----------|-----------|
+| ONE_PAGE_SUMMARY | You want everything on one page |
+| QUICK_START | You need common examples |
+| VARIABLE_VALUES_REFERENCE | You need copy-paste commands |
+| SETUP_VERIFICATION | You want to understand what was done |
+| ENVIRONMENT_VARIABLES | You need complete technical details |
+
+---
+
+**TL;DR:**
+- Want to debug? → `npm run test:headed`
+- Want speed? → `npm run test:parallel`
+- Want specifics? → `CUCUMBER_TAGS="@tag" npm test`
+- Want it all? → `HEADED=true CUCUMBER_TAGS="@tag" CUCUMBER_WORKERS=4 npm test`
+
+🚀 **Pick a command. Run it. Done!**
